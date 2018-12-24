@@ -1,7 +1,11 @@
 package test
 
 import (
+	"io"
+	"log"
 	"math/rand"
+	"os"
+	"strings"
 	"time"
 )
 
@@ -22,4 +26,24 @@ func RandomInts(n, min, max int) []int {
 		r[i] = RandomInt(min, max)
 	}
 	return r
+}
+
+// Capture returns as string what the function fn prints on stdout
+func Capture(fn func()) string {
+	old := os.Stdout
+	r, w, err := os.Pipe()
+	if err != nil {
+		log.Fatalln("Cannot create pipe.")
+	}
+	os.Stdout = w
+	fn()
+	outC := make(chan string)
+	var buf strings.Builder
+	go func() {
+		io.Copy(&buf, r)
+		outC <- buf.String()
+	}()
+	os.Stdout = old
+	w.Close()
+	return <-outC
 }
