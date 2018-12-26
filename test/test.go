@@ -5,6 +5,7 @@ import (
 	"log"
 	"math/rand"
 	"os"
+	"os/exec"
 	"strings"
 	"time"
 )
@@ -28,8 +29,19 @@ func RandomInts(n, min, max int) []int {
 	return r
 }
 
-// Capture returns as string what the function fn prints on stdout
-func Capture(fn func()) string {
+// ExecOut runs the command name with its args and returns its combined stdout
+// and stderr as string.
+// The returned error is nil if the command runs, has no problems
+// copying stdin, stdout, and stderr, and exits with a zero exit
+// status.
+func ExecOut(name string, args ...string) (string, error) {
+	cmd := exec.Command(name, args...)
+	bytes, err := cmd.CombinedOutput()
+	return string(bytes), err
+}
+
+// FnOut returns as string what the function fn prints on stdout
+func FnOut(fn func()) string {
 	old := os.Stdout
 	r, w, err := os.Pipe()
 	if err != nil {
