@@ -1,6 +1,10 @@
 package z01_test
 
-import "github.com/01-edu/z01"
+import (
+	"testing"
+
+	"github.com/01-edu/z01"
+)
 
 func ExamplePrintRune() {
 	z01.PrintRune('0')
@@ -14,18 +18,22 @@ func ExamplePrintRune() {
 	// ❤
 }
 
-func ExampleSizeof() {
-	eightBytes := int64(0)
-	tests := []bool{
-		z01.Sizeof(eightBytes) == 8,
-		z01.Sizeof('👌') == 4,
-		z01.Sizeof(nil) == 0,
+func TestSizeof(t *testing.T) {
+	tests := []struct {
+		i    interface{}
+		size int
+	}{
+		{"azefoiazhefzaef", 16},
+		{int64(0), 8},
+		{'👌', 4},
+		{int16(0), 2},
+		{false, 1},
+		{nil, 0},
 	}
 	for _, test := range tests {
-		if !test {
-			return
+		actual := z01.Sizeof(test.i)
+		if actual != test.size {
+			t.Errorf("z01.Sizeof(%#v) == %d instead of %d\n", test.i, test.size, actual)
 		}
 	}
-	z01.PrintRune('👌')
-	// Output: 👌
 }
