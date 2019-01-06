@@ -6,10 +6,10 @@ func ExamplePrintRune() {
 	z01.PrintRune('0')
 	z01.PrintRune('1')
 	z01.PrintRune('\n')
-	z01.PrintRune('❤')
+	z01.PrintRune('♥')
 	invalidRune := rune(-1)
 	z01.PrintRune(invalidRune)
 	// Output:
 	// 01
-	// ❤
+	// ♥
 }
