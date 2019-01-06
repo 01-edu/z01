@@ -3,7 +3,6 @@ package z01
 import (
 	"errors"
 	"os"
-	"reflect"
 	"unicode/utf8"
 )
 
@@ -18,12 +17,4 @@ func PrintRune(r rune) error {
 	utf8.EncodeRune(p, r)
 	_, err := os.Stdout.Write(p)
 	return err
-}
-
-// Sizeof returns the number of bytes needed to store a value of the given dynamic type of i
-func Sizeof(i interface{}) int {
-	if i == nil {
-		return 0
-	}
-	return int(reflect.TypeOf(i).Size())
 }
