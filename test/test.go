@@ -1,12 +1,16 @@
 package test
 
 import (
+	"fmt"
 	"io"
 	"log"
 	"math/rand"
 	"os"
 	"os/exec"
+	"reflect"
+	"runtime"
 	"strings"
+	"testing"
 	"time"
 )
 
@@ -58,4 +62,68 @@ func FnOut(fn func()) string {
 	os.Stdout = old
 	w.Close()
 	return <-outC
+}
+
+// Table is the type used to pass values to Fixed & Random functions
+type Table [][2][]interface{}
+
+// Format is more user-friendly than Sprint
+func Format(a ...interface{}) (s string) {
+	ss := make([]string, len(a))
+	for i, v := range a {
+		switch v.(type) {
+		case nil:
+			// instead of "<nil>"
+			ss[i] = "nil"
+		case byte, rune: // uint8, int32
+			// a single-quoted character literal safely escaped with Go syntax
+			ss[i] = fmt.Sprintf("%q", v)
+		default:
+			// a Go-syntax representation of the value
+			ss[i] = fmt.Sprintf("%#v", v)
+		}
+	}
+	return strings.Join(ss, ", ")
+}
+
+var valueOf = reflect.ValueOf
+
+func NameOfFunc(fn interface{}) string {
+	if rf := runtime.FuncForPC(valueOf(fn).Pointer()); rf != nil {
+		name := rf.Name()
+		tokens := strings.Split(name, ".")
+		return tokens[len(tokens)-1]
+	}
+	return "unknownFunc"
+}
+
+// Fixed is a test function that, for each test in tests, calls fn with the provided arguments
+// If the result is different from those expected, an error is propagated through t
+func Fixed(t *testing.T, fn interface{}, tests Table) {
+	for _, test := range tests {
+		var in = test[0]
+		var out = test[1]
+		vals := make([]reflect.Value, len(in))
+		for i, v := range in {
+			if v != nil {
+				vals[i] = valueOf(v)
+			} else {
+				vals[i] = reflect.Zero(reflect.TypeOf((*interface{})(nil)).Elem())
+			}
+		}
+		vals = valueOf(fn).Call(vals)
+		actual := make([]interface{}, len(vals))
+		for i, v := range vals {
+			actual[i] = v.Interface()
+		}
+		if !reflect.DeepEqual(actual, out) {
+			t.Errorf(
+				"%s(%s) == %s instead of %s\n",
+				NameOfFunc(fn),
+				Format(in...),
+				Format(actual...),
+				Format(out...),
+			)
+		}
+	}
 }
