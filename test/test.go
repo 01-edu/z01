@@ -12,6 +12,13 @@ import (
 	"strings"
 	"testing"
 	"time"
+	"unsafe"
+)
+
+const (
+	IntSize = unsafe.Sizeof(0)*8 - 1
+	IntMin  = -1 << IntSize
+	IntMax  = 1<<IntSize - 1
 )
 
 func init() {
@@ -19,16 +26,31 @@ func init() {
 	rand.Seed(nsSince1970)
 }
 
-// RandomInt return a random int between min and max
-func RandomInt(min, max int) int {
+func RandomInt() int {
+	min := IntMin / 2
+	max := IntMax / 2
+	return rand.Intn(max-min) + min
+}
+
+// RandomRange return a random int in range [min,max]
+func RandomRange(min, max int) int {
 	return rand.Intn(max-min+1) + min
 }
 
-// RandomInts return a slice of n random int between min and max
-func RandomInts(n, min, max int) []int {
+// RandomInts return a slice of n random int
+func RandomInts(n int) []int {
 	r := make([]int, n)
 	for i := range r {
-		r[i] = RandomInt(min, max)
+		r[i] = RandomInt()
+	}
+	return r
+}
+
+// RandomRanges return a slice of n random int ranges [min,max]
+func RandomRanges(n, min, max int) []int {
+	r := make([]int, n)
+	for i := range r {
+		r[i] = RandomRange(min, max)
 	}
 	return r
 }
@@ -64,9 +86,6 @@ func FnOut(fn func()) string {
 	return <-outC
 }
 
-// Table is the type used to pass values to Fixed & Random functions
-type Table [][2][]interface{}
-
 // Format is more user-friendly than Sprint
 func Format(a ...interface{}) (s string) {
 	ss := make([]string, len(a))
@@ -97,33 +116,43 @@ func NameOfFunc(fn interface{}) string {
 	return "unknownFunc"
 }
 
-// Fixed is a test function that, for each test in tests, calls fn with the provided arguments
-// If the result is different from those expected, an error is propagated through t
-func Fixed(t *testing.T, fn interface{}, tests Table) {
-	for _, test := range tests {
-		var in = test[0]
-		var out = test[1]
-		vals := make([]reflect.Value, len(in))
-		for i, v := range in {
-			if v != nil {
-				vals[i] = valueOf(v)
-			} else {
-				vals[i] = reflect.Zero(reflect.TypeOf((*interface{})(nil)).Elem())
-			}
-		}
-		vals = valueOf(fn).Call(vals)
-		actual := make([]interface{}, len(vals))
-		for i, v := range vals {
-			actual[i] = v.Interface()
-		}
-		if !reflect.DeepEqual(actual, out) {
-			t.Errorf(
-				"%s(%s) == %s instead of %s\n",
-				NameOfFunc(fn),
-				Format(in...),
-				Format(actual...),
-				Format(out...),
-			)
+func Call(fn interface{}, args []interface{}) []interface{} {
+	// Convert args from []interface{} to []reflect.Value
+	vals := make([]reflect.Value, len(args))
+	for i, v := range args {
+		if v != nil {
+			vals[i] = valueOf(v)
+		} else {
+			vals[i] = reflect.Zero(reflect.TypeOf((*interface{})(nil)).Elem())
 		}
 	}
+
+	vals = valueOf(fn).Call(vals)
+
+	// Convert the return values from []reflect.Value to []interface{}
+	result := make([]interface{}, len(vals))
+	for i, v := range vals {
+		result[i] = v.Interface()
+	}
+	return result
+}
+
+// Expect is a test function that calls fn with the provided args
+// If the result is different from those expected, an error is propagated through t
+func Expect(t *testing.T, fn interface{}, args, result []interface{}) {
+	actual := Call(fn, args)
+	if !reflect.DeepEqual(actual, result) {
+		t.Errorf(
+			"%s(%s) == %s instead of %s\n",
+			NameOfFunc(fn),
+			Format(args...),
+			Format(actual...),
+			Format(result...),
+		)
+	}
+}
+
+func Challenge(t *testing.T, fn, valid interface{}, args ...interface{}) {
+	result := Call(valid, args)
+	Expect(t, fn, args, result)
 }

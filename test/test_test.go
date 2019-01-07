@@ -10,7 +10,7 @@ import (
 func TestRandomInt(t *testing.T) {
 	min := 55
 	max := 58
-	nb := test.RandomInt(min, max)
+	nb := test.RandomRange(min, max)
 	if nb < min || nb > max {
 		t.Errorf("RandomInt(%d, %d) not in the [%d, %d] range", min, max, min, max)
 	}
@@ -64,8 +64,8 @@ func divMod(a, b int) (div, mod int) {
 	return a / b, a % b
 }
 
-func TestFixed(t *testing.T) {
-	tests := test.Table{
+func TestValues(t *testing.T) {
+	items := [][2][]interface{}{
 		//,--------------- first argument (a)
 		//|  ,------------ second argument (b)
 		//|  |    ,------- first return value (div)
@@ -78,5 +78,7 @@ func TestFixed(t *testing.T) {
 		{{3, 2}, {1, 1}},
 		{{9, 2}, {4, 1}},
 	}
-	test.Fixed(t, divMod, tests)
+	for _, item := range items {
+		test.Expect(t, divMod, item[0], item[1])
+	}
 }
