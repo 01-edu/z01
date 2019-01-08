@@ -64,7 +64,7 @@ func divMod(a, b int) (div, mod int) {
 	return a / b, a % b
 }
 
-func TestValues(t *testing.T) {
+func TestExpect(t *testing.T) {
 	items := [][2][]interface{}{
 		//,--------------- first argument (a)
 		//|  ,------------ second argument (b)
