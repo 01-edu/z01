@@ -55,6 +55,24 @@ func RandomRanges(n, min, max int) []int {
 	return r
 }
 
+func RandomASCIIString() string {
+	l := RandomRange(1, 20)
+	bytes := make([]byte, l)
+	for i := range bytes {
+		c := RandomRange(32, 126) // Printable ASCII characters
+		bytes[i] = byte(c)
+	}
+	return string(bytes)
+}
+
+func RandomASCIIStrings(n int) []string {
+	s := make([]string, n)
+	for i := range s {
+		s[i] = RandomASCIIString()
+	}
+	return s
+}
+
 // ExecOut runs the command name with its args and returns its combined stdout
 // and stderr as string.
 // The returned error is nil if the command runs, has no problems
@@ -116,7 +134,7 @@ func NameOfFunc(fn interface{}) string {
 	return "unknownFunc"
 }
 
-func Call(fn interface{}, args []interface{}) []interface{} {
+func call(fn interface{}, args []interface{}) []interface{} {
 	// Convert args from []interface{} to []reflect.Value
 	vals := make([]reflect.Value, len(args))
 	for i, v := range args {
@@ -140,7 +158,7 @@ func Call(fn interface{}, args []interface{}) []interface{} {
 // Expect is a test function that calls fn with the provided args
 // If the result is different from those expected, an error is propagated through t
 func Expect(t *testing.T, fn interface{}, args, result []interface{}) {
-	actual := Call(fn, args)
+	actual := call(fn, args)
 	if !reflect.DeepEqual(actual, result) {
 		t.Errorf(
 			"%s(%s) == %s instead of %s\n",
@@ -153,6 +171,6 @@ func Expect(t *testing.T, fn interface{}, args, result []interface{}) {
 }
 
 func Challenge(t *testing.T, fn, valid interface{}, args ...interface{}) {
-	result := Call(valid, args)
+	result := call(valid, args)
 	Expect(t, fn, args, result)
 }
