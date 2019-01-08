@@ -85,14 +85,14 @@ func ExecOut(name string, args ...string) (string, error) {
 }
 
 // FnOut returns as string what the function fn prints on stdout
-func FnOut(fn func()) string {
+func FnOut(fn interface{}, args ...interface{}) string {
 	old := os.Stdout
 	r, w, err := os.Pipe()
 	if err != nil {
 		log.Fatalln("Cannot create pipe.")
 	}
 	os.Stdout = w
-	fn()
+	call(fn, args)
 	outC := make(chan string)
 	var buf strings.Builder
 	go func() {
