@@ -7,15 +7,6 @@ import (
 	"github.com/01-edu/z01/test"
 )
 
-func TestRandomInt(t *testing.T) {
-	min := 55
-	max := 58
-	nb := test.RandomRange(min, max)
-	if nb < min || nb > max {
-		t.Errorf("RandomInt(%d, %d) not in the [%d, %d] range", min, max, min, max)
-	}
-}
-
 func ExampleExecOut() {
 	output, err := test.ExecOut("echo", "test")
 	if err == nil {
@@ -24,18 +15,6 @@ func ExampleExecOut() {
 		fmt.Print(err)
 	}
 	// Output: test
-}
-
-func ExampleFnOut() {
-	fn := func() {
-		fmt.Println("first line")
-		fmt.Println("second line")
-	}
-	output := test.FnOut(fn)
-	fmt.Print(output)
-	// Output:
-	// first line
-	// second line
 }
 
 func TestNameOfFunc(t *testing.T) {
@@ -58,27 +37,4 @@ func ExampleFormat() {
 	// '♥'
 	// 32 5 true <nil> [1] [1]
 	// ' ', " ", 5, true, nil, []int{1}, [1]int{1}
-}
-
-func divMod(a, b int) (div, mod int) {
-	return a / b, a % b
-}
-
-func TestExpect(t *testing.T) {
-	items := [][2][]interface{}{
-		//,--------------- first argument (a)
-		//|  ,------------ second argument (b)
-		//|  |    ,------- first return value (div)
-		//|  |    |  ,---- second return value (mod)
-		//|  |    |  |
-		//V  V    V  V
-		{{0, 1}, {0, 0}},
-		{{1, 1}, {1, 0}},
-		{{1, 2}, {0, 1}},
-		{{3, 2}, {1, 1}},
-		{{9, 2}, {4, 1}},
-	}
-	for _, item := range items {
-		test.Expect(t, divMod, item[0], item[1])
-	}
 }
