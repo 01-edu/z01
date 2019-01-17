@@ -55,11 +55,14 @@ func RandomRanges(n, min, max int) []int {
 	return r
 }
 
+// RandomASCIIString returns a string with [1,20] printable ASCII characters
 func RandomASCIIString() string {
 	l := RandomRange(1, 20)
 	bytes := make([]byte, l)
 	for i := range bytes {
-		c := RandomRange(32, 126) // Printable ASCII characters
+		printFirst := 32
+		printLast := 126
+		c := RandomRange(printFirst, printLast)
 		bytes[i] = byte(c)
 	}
 	return string(bytes)
@@ -84,15 +87,19 @@ func ExecOut(name string, args ...string) (string, error) {
 	return string(bytes), err
 }
 
-// FnOut returns as string what the function fn prints on stdout
-func FnOut(fn interface{}, args ...interface{}) string {
+type output struct {
+	results []interface{}
+	stdout  string
+}
+
+func monitor(fn interface{}, args []interface{}) (out output) {
 	old := os.Stdout
 	r, w, err := os.Pipe()
 	if err != nil {
 		log.Fatalln("Cannot create pipe.")
 	}
 	os.Stdout = w
-	call(fn, args)
+	out.results = call(fn, args)
 	outC := make(chan string)
 	var buf strings.Builder
 	go func() {
@@ -101,18 +108,20 @@ func FnOut(fn interface{}, args ...interface{}) string {
 	}()
 	os.Stdout = old
 	w.Close()
-	return <-outC
+	out.stdout = <-outC
+	return out
 }
 
 // Format is more user-friendly than Sprint
-func Format(a ...interface{}) (s string) {
+func Format(a ...interface{}) string {
 	ss := make([]string, len(a))
 	for i, v := range a {
 		switch v.(type) {
 		case nil:
-			// instead of "<nil>"
-			ss[i] = "nil"
-		case byte, rune: // uint8, int32
+			ss[i] = "nil" // instead of "<nil>"
+		case
+			byte, // uint8
+			rune: // int32
 			// a single-quoted character literal safely escaped with Go syntax
 			ss[i] = fmt.Sprintf("%q", v)
 		default:
@@ -155,22 +164,22 @@ func call(fn interface{}, args []interface{}) []interface{} {
 	return result
 }
 
-// Expect is a test function that calls fn with the provided args
-// If the result is different from those expected, an error is propagated through t
-func Expect(t *testing.T, fn interface{}, args, result []interface{}) {
-	actual := call(fn, args)
-	if !reflect.DeepEqual(actual, result) {
-		t.Errorf(
-			"%s(%s) == %s instead of %s\n",
-			NameOfFunc(fn),
+func Challenge(t *testing.T, fn1, fn2 interface{}, args ...interface{}) {
+	st1 := monitor(fn1, args)
+	st2 := monitor(fn2, args)
+	if !reflect.DeepEqual(st1.results, st2.results) {
+		t.Errorf("%s(%s) == %s instead of %s\n",
+			NameOfFunc(fn1),
 			Format(args...),
-			Format(actual...),
-			Format(result...),
+			Format(st1.results...),
+			Format(st2.results...),
+		)
+	} else if !reflect.DeepEqual(st1.stdout, st2.stdout) {
+		t.Errorf("%s(%s) prints %s instead of %s\n",
+			NameOfFunc(fn1),
+			Format(args...),
+			Format(st1.stdout),
+			Format(st2.stdout),
 		)
 	}
-}
-
-func Challenge(t *testing.T, fn, valid interface{}, args ...interface{}) {
-	result := call(valid, args)
-	Expect(t, fn, args, result)
 }
