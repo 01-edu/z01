@@ -121,7 +121,6 @@ func monitor(fn interface{}, args []interface{}) (out output) {
 	return out
 }
 
-// Format is more user-friendly than Sprint
 func Format(a ...interface{}) string {
 	ss := make([]string, len(a))
 	for i, v := range a {
@@ -133,6 +132,17 @@ func Format(a ...interface{}) string {
 			rune: // int32
 			// a single-quoted character literal safely escaped with Go syntax
 			ss[i] = fmt.Sprintf("%q", v)
+		case string:
+			s := []rune(fmt.Sprintf("%#v", v))
+			l := len(s)
+			max := 120
+			if l > max {
+				// truncate the string
+				extra := l - max
+				start := (l - extra + 1) / 2
+				s = append(s[:start], append([]rune("[...]"), s[start+extra:]...)...)
+			}
+			ss[i] = string(s)
 		default:
 			// a Go-syntax representation of the value
 			ss[i] = fmt.Sprintf("%#v", v)
