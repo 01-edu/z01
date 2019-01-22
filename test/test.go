@@ -32,6 +32,15 @@ func RandomInt() int {
 	return rand.Intn(max-min) + min
 }
 
+func IntRange(min, max int) []int {
+	s := make([]int, max-min+1)
+	for i := range s {
+		s[i] = min
+		min++
+	}
+	return s
+}
+
 // RandomRange return a random int in range [min,max]
 func RandomRange(min, max int) int {
 	return rand.Intn(max-min+1) + min
