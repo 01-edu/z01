@@ -8,7 +8,10 @@ func ExamplePrintRune() {
 	z01.PrintRune('\n')
 	z01.PrintRune('♥')
 	invalidRune := rune(-1)
-	z01.PrintRune(invalidRune)
+	err := z01.PrintRune(invalidRune)
+	if err == nil {
+		panic("z01.PrintRune should fail with an invalid rune")
+	}
 	// Output:
 	// 01
 	// ♥
