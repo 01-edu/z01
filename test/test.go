@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"math/big"
+	"math/bits"
 	"math/rand"
 	"os"
 	"os/exec"
@@ -12,78 +14,205 @@ import (
 	"strings"
 	"testing"
 	"time"
-	"unsafe"
+	"unicode"
+	"unicode/utf8"
 )
 
 const (
-	IntSize = unsafe.Sizeof(0)*8 - 1
-	IntMin  = -1 << IntSize
-	IntMax  = 1<<IntSize - 1
+	IntSize = bits.UintSize - 1 // 31 or 63
+
+	//                                  32 bits           64 bits
+	MinInt  = -1 << IntSize        // -2147483648  -9223372036854775808
+	MaxInt  = 1<<IntSize - 1       //  2147483647   9223372036854775807
+	MaxUint = 1<<bits.UintSize - 1 //  4294967295   18446744073709551615
+
+	strLen   = 20 // Default length of random strings
+	sliceLen = 8  // Default length of slices
+)
+
+var (
+	nsSince1970 = time.Now().UnixNano()
+	bigRand     = rand.New(rand.NewSource(nsSince1970))
+
+	// charsets
+	Digit = RuneRange('0', '9')         // Decimal digit characters
+	Lower = RuneRange('a', 'z')         // Lowercase latin alphabet characters
+	Upper = RuneRange('A', 'Z')         // Uppercase latin alphabet characters
+	ASCII = RuneRange(' ', '~')         // ASCII printable characters
+	Space = strings.Repeat(" ", strLen) // Spaces characters
+	Basic = Lower + Upper               // Lower and Upper characters
+	Alnum = Basic + Digit               // Basic and Digit characters
+	Words = Alnum + Space               // Alnum and Space characters
 )
 
 func init() {
-	nsSince1970 := time.Now().UnixNano()
 	rand.Seed(nsSince1970)
 }
 
-func RandomInt() int {
-	min := IntMin / 2
-	max := IntMax / 2
-	return rand.Intn(max-min) + min
-}
-
-func IntRange(min, max int) []int {
-	s := make([]int, max-min+1)
-	for i := range s {
-		s[i] = min
-		min++
+// RuneRange returns a string containing all the valid runes from a to b.
+func RuneRange(a, b rune) string {
+	if a > b {
+		return ""
 	}
-	return s
-}
-
-// RandomRange return a random int in range [min,max]
-func RandomRange(min, max int) int {
-	return rand.Intn(max-min+1) + min
-}
-
-// RandomInts return a slice of n random int
-func RandomInts(n int) []int {
-	r := make([]int, n)
-	for i := range r {
-		r[i] = RandomInt()
+	var s []rune
+	for {
+		if utf8.ValidRune(a) {
+			s = append(s, a)
+		}
+		if a == b {
+			return string(s)
+		}
+		a++
 	}
-	return r
 }
 
-// RandomRanges return a slice of n random int ranges [min,max]
-func RandomRanges(n, min, max int) []int {
-	r := make([]int, n)
-	for i := range r {
-		r[i] = RandomRange(min, max)
+// IntRange returns a slice containing all the int from a to b.
+func IntRange(a, b int) (s []int) {
+	if a > b {
+		return
 	}
-	return r
+	for {
+		s = append(s, a)
+		if a == b {
+			return
+		}
+		a++
+	}
 }
 
-// RandomASCIIString returns a string with [1,20] printable ASCII characters
-func RandomASCIIString() string {
-	l := RandomRange(1, 20)
-	bytes := make([]byte, l)
-	for i := range bytes {
-		printFirst := 32
-		printLast := 126
-		c := RandomRange(printFirst, printLast)
-		bytes[i] = byte(c)
+// RandIntN returns a random int between a and b included.
+func RandIntN(a, b int) int {
+	if a > b {
+		a, b = b, a
 	}
-	return string(bytes)
+	n := big.NewInt(int64(b))      // b
+	n.Sub(n, big.NewInt(int64(a))) // b-a
+	n.Add(n, big.NewInt(1))        // b-a+1
+	n.Rand(bigRand, n)             // 0 <= n <= b-a
+	n.Add(n, big.NewInt(int64(a))) // a <= n <= b
+	return int(n.Int64())
 }
 
-func RandomASCIIStrings(n int) []string {
-	s := make([]string, n)
-	for i := range s {
-		s[i] = RandomASCIIString()
+// RandPosZ returns a random int between 0 and MaxInt included.
+func RandPosZ() int { return RandIntN(0, MaxInt) }
+
+// RandPos returns a random int between 1 and MaxInt included.
+func RandPos() int { return RandIntN(1, MaxInt) }
+
+// RandInt returns a random int between MinInt and MaxInt included.
+func RandInt() int { return RandIntN(MinInt, MaxInt) }
+
+// RandNeg returns a random int between MinInt and 1 included.
+func RandNeg() int { return RandIntN(MinInt, 1) }
+
+// RandNegZ returns a random int between MinInt and 0 included.
+func RandNegZ() int { return RandIntN(MinInt, 0) }
+
+// RandRune returns a random printable rune
+// (although you may not have the corresponding glyph).
+// One-in-ten chance to get a rune higher than 0x10000 (1<<16).
+func RandRune() rune {
+	ranges := unicode.PrintRanges
+	table := ranges[rand.Intn(len(ranges))]
+	if rand.Intn(10) == 0 {
+		r := table.R32[rand.Intn(len(table.R32))]
+		n := uint32(rand.Intn(int((r.Hi-r.Lo)/r.Stride) + 1))
+		return rune(r.Lo + n*r.Stride)
+	} else {
+		r := table.R16[rand.Intn(len(table.R16))]
+		n := uint16(rand.Intn(int((r.Hi-r.Lo)/r.Stride) + 1))
+		return rune(r.Lo + n*r.Stride)
 	}
-	return s
 }
+
+// RandStr returns a string with l random characters taken from chars.
+// If chars is empty, the characters are random printable runes.
+func RandStr(l int, chars string) string {
+	if l <= 0 {
+		return ""
+	}
+	dst := make([]rune, l)
+	if chars == "" {
+		for i := range dst {
+			dst[i] = RandRune()
+		}
+	} else {
+		src := []rune(chars)
+		for i := range dst {
+			r := rand.Intn(len(src))
+			dst[i] = src[r]
+		}
+	}
+	return string(dst)
+}
+
+// RandDigit returns a string containing random Decimal digit characters.
+func RandDigit() string { return RandStr(strLen, Digit) }
+
+// RandLower returns a string containing random Lowercase latin alphabet
+// characters.
+func RandLower() string { return RandStr(strLen, Lower) }
+
+// RandUpper returns a string containing random Uppercase latin alphabet
+// characters.
+func RandUpper() string { return RandStr(strLen, Upper) }
+
+// RandASCII returns a string containing random ASCII printable characters.
+func RandASCII() string { return RandStr(strLen, ASCII) }
+
+// RandSpace returns a string containing random Spaces characters.
+func RandSpace() string { return RandStr(strLen, Space) }
+
+// RandBasic returns a string containing random Lower and Upper characters.
+func RandBasic() string { return RandStr(strLen, Basic) }
+
+// RandAlnum returns a string containing random Basic and Digit characters.
+func RandAlnum() string { return RandStr(strLen, Alnum) }
+
+// RandWords returns a string containing random Alnum and Space characters.
+func RandWords() string { return RandStr(strLen, Words) }
+
+// MakeStrFunc returns a slice of strings created by f.
+// It panics if count is negative.
+func MakeStrFunc(f func() string, count int) (s []string) {
+	i := 0
+	for i < count {
+		s = append(s, f())
+		i++
+	}
+	return
+}
+
+// MultRandDigit returns a slice of strings containing random Decimal digit
+// characters.
+func MultRandDigit() []string { return MakeStrFunc(RandDigit, sliceLen) }
+
+// MultRandLower returns a slice of strings containing random Lowercase latin
+// alphabet.
+func MultRandLower() []string { return MakeStrFunc(RandLower, sliceLen) }
+
+// MultRandUpper returns a slice of strings containing random Uppercase latin
+// alphabet.
+func MultRandUpper() []string { return MakeStrFunc(RandUpper, sliceLen) }
+
+// MultRandASCII returns a slice of strings containing random ASCII printable
+// characters.
+func MultRandASCII() []string { return MakeStrFunc(RandASCII, sliceLen) }
+
+// MultRandSpace returns a slice of strings containing random Spaces characters.
+func MultRandSpace() []string { return MakeStrFunc(RandSpace, sliceLen) }
+
+// MultRandBasic returns a slice of strings containing random Lower and Upper
+// characters.
+func MultRandBasic() []string { return MakeStrFunc(RandBasic, sliceLen) }
+
+// MultRandAlnum returns a slice of strings containing random Basic and Digit
+// characters.
+func MultRandAlnum() []string { return MakeStrFunc(RandAlnum, sliceLen) }
+
+// MultRandWords returns a slice of strings containing random Alnum and Space
+// characters.
+func MultRandWords() []string { return MakeStrFunc(RandWords, sliceLen) }
 
 // ExecOut runs the command name with its args and returns its combined stdout
 // and stderr as string.
