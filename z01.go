@@ -82,7 +82,6 @@ func RuneRange(a, b rune) string {
 }
 
 // IntRange returns a slice containing all the int from a to b.
-// TODO: handle a > b
 func IntRange(a, b int) (s []int) {
 	for {
 		s = append(s, a)
