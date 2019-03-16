@@ -260,7 +260,7 @@ func MultRandAlnum() []string { return MakeStrFunc(RandAlnum) }
 // characters.
 func MultRandWords() []string { return MakeStrFunc(RandWords) }
 
-// UniqueId is a function that returns a string composed of two numbers:
+// UniqueId returns a string composed of two numbers:
 // 1) the number of nanoseconds since 1970
 // 2) a bignum counter thread-safely incremented each time this function is called
 var UniqueId = func() func() string {
