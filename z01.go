@@ -13,6 +13,7 @@ import (
 	"reflect"
 	"runtime"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 	"unicode"
@@ -258,6 +259,22 @@ func MultRandAlnum() []string { return MakeStrFunc(RandAlnum) }
 // MultRandWords returns a slice of strings containing random Alnum and Space
 // characters.
 func MultRandWords() []string { return MakeStrFunc(RandWords) }
+
+// UniqueId is a function that returns a string composed of two numbers:
+// 1) the number of nanoseconds since 1970
+// 2) a bignum counter thread-safely incremented each time this function is called
+var UniqueId = func() func() string {
+	var lock sync.Mutex
+	id := big.NewInt(nsSince1970)
+	one := big.NewInt(1)
+	return func() string {
+		lock.Lock()
+		id.Add(id, one)
+		s := id.String()
+		lock.Unlock()
+		return s
+	}
+}()
 
 // ExecOut runs the command name with its args and returns its combined stdout
 // and stderr as string.
