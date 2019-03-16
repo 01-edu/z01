@@ -288,7 +288,7 @@ func ExecOut(name string, args ...string) (string, error) {
 	if err == nil {
 		return out, nil
 	}
-	return "", errors.New(out + err.Error())
+	return "", errors.New(out)
 }
 
 func Format(a ...interface{}) string {
