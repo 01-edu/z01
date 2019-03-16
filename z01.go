@@ -284,7 +284,7 @@ var UniqueId = func() func() string {
 func ExecOut(name string, args ...string) (string, error) {
 	cmd := exec.Command(name, args...)
 	bytes, err := cmd.CombinedOutput()
-	out := strings.TrimSpace(string(bytes)) + "\n"
+	out := string(bytes)
 	if err == nil {
 		return out, nil
 	}
