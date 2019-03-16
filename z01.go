@@ -276,6 +276,26 @@ var UniqueId = func() func() string {
 	}
 }()
 
+// Wrap returns an error composed of the string of err & s
+// Append " : " if s is a single-line
+func Wrap(err error, s string) error {
+	if err == nil {
+		return nil
+	}
+	if s == "" {
+		return err
+	}
+	if err.Error() == "" {
+		return errors.New(s)
+	}
+	if !strings.Contains(s, "\n") {
+		s += " : "
+	} else if !strings.HasSuffix(s, "\n") {
+		s += "\n"
+	}
+	return errors.New(s + err.Error())
+}
+
 // ExecOut runs the command name with its args and returns its combined stdout
 // and stderr as string.
 // The returned error is nil if the command runs, has no problems
