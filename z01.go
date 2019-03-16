@@ -267,7 +267,11 @@ func MultRandWords() []string { return MakeStrFunc(RandWords) }
 func ExecOut(name string, args ...string) (string, error) {
 	cmd := exec.Command(name, args...)
 	bytes, err := cmd.CombinedOutput()
-	return string(bytes), err
+	out := strings.TrimSpace(string(bytes)) + "\n"
+	if err == nil {
+		return out, nil
+	}
+	return "", errors.New(out + err.Error())
 }
 
 func Format(a ...interface{}) string {
