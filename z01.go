@@ -305,6 +305,9 @@ func ExecOut(name string, args ...string) (string, error) {
 	if err == nil {
 		return out, nil
 	}
+	if out == "" {
+		return "", Wrap(err, "Command failed")
+	}
 	return "", errors.New(out)
 }
 
