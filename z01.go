@@ -279,10 +279,7 @@ var UniqueId = func() func() string {
 // Wrap returns an error composed of the string of err & s
 // Append " : " if s is a single-line
 func Wrap(err error, s string) error {
-	if err == nil {
-		return nil
-	}
-	if s == "" {
+	if err == nil || s == "" {
 		return err
 	}
 	if err.Error() == "" {
