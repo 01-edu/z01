@@ -28,8 +28,8 @@ const (
 	MaxInt  = 1<<IntSize - 1       //  2147483647   9223372036854775807
 	MaxUint = 1<<bits.UintSize - 1 //  4294967295   18446744073709551615
 
-	StrLen   = 20 // Default length of random strings
-	SliceLen = 8  // Default length of slices
+	StrLen   = 13 // Default length of random strings
+	SliceLen = 4  // Default length of slices
 )
 
 var (
