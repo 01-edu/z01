@@ -374,8 +374,8 @@ func Call(fn interface{}, args []interface{}) []interface{} {
 }
 
 type Output struct {
-	results []interface{}
-	stdout  string
+	Results []interface{}
+	Stdout  string
 }
 
 func Monitor(fn interface{}, args []interface{}) (out Output) {
@@ -385,7 +385,7 @@ func Monitor(fn interface{}, args []interface{}) (out Output) {
 		log.Fatalln("Cannot create pipe.")
 	}
 	os.Stdout = w
-	out.results = Call(fn, args)
+	out.Results = Call(fn, args)
 	outC := make(chan string)
 	var buf strings.Builder
 	go func() {
@@ -394,26 +394,26 @@ func Monitor(fn interface{}, args []interface{}) (out Output) {
 	}()
 	os.Stdout = old
 	w.Close()
-	out.stdout = <-outC
+	out.Stdout = <-outC
 	return out
 }
 
 func Challenge(t *testing.T, fn1, fn2 interface{}, args ...interface{}) {
 	st1 := Monitor(fn1, args)
 	st2 := Monitor(fn2, args)
-	if !reflect.DeepEqual(st1.results, st2.results) {
+	if !reflect.DeepEqual(st1.Results, st2.Results) {
 		t.Errorf("%s(%s) == %s instead of %s\n",
 			NameOfFunc(fn1),
 			Format(args...),
-			Format(st1.results...),
-			Format(st2.results...),
+			Format(st1.Results...),
+			Format(st2.Results...),
 		)
-	} else if !reflect.DeepEqual(st1.stdout, st2.stdout) {
+	} else if !reflect.DeepEqual(st1.Stdout, st2.Stdout) {
 		t.Errorf("%s(%s) prints %s instead of %s\n",
 			NameOfFunc(fn1),
 			Format(args...),
-			Format(st1.stdout),
-			Format(st2.stdout),
+			Format(st1.Stdout),
+			Format(st2.Stdout),
 		)
 	}
 }
