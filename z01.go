@@ -10,6 +10,7 @@ import (
 	"math/rand"
 	"os"
 	"os/exec"
+	"path"
 	"reflect"
 	"runtime"
 	"strings"
@@ -415,5 +416,31 @@ func Challenge(t *testing.T, fn1, fn2 interface{}, args ...interface{}) {
 			Format(st1.Stdout),
 			Format(st2.Stdout),
 		)
+	}
+}
+
+func MainOut(name string, args ...string) (out string, err error) {
+	main := path.Join(name, "a.out")
+	if _, err = ExecOut("go", "build", "-o", main, name); err != nil {
+		return
+	}
+	out, err = ExecOut(main, args...)
+	return
+}
+
+func ChallengeMain(t *testing.T, args ...string) {
+	exercise := strings.ToLower(
+		strings.TrimPrefix(t.Name(), "Test"))
+	out, err := MainOut("./student/"+exercise, args...)
+	if err != nil {
+		t.Errorf(err.Error())
+	}
+	correct, err := MainOut("./solutions/"+exercise, args...)
+	if err != nil {
+		t.Errorf(err.Error())
+	}
+	if out != correct {
+		t.Errorf("./%s %s prints %q instead of %q\n",
+			exercise, strings.Join(args, " "), out, correct)
 	}
 }
