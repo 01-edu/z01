@@ -343,7 +343,7 @@ func Format(a ...interface{}) string {
 
 var valueOf = reflect.ValueOf
 
-func nameOfFunc(fn interface{}) string {
+func NameOfFunc(fn interface{}) string {
 	if rf := runtime.FuncForPC(valueOf(fn).Pointer()); rf != nil {
 		name := rf.Name()
 		tokens := strings.Split(name, ".")
@@ -352,7 +352,7 @@ func nameOfFunc(fn interface{}) string {
 	return "unknownFunc"
 }
 
-func call(fn interface{}, args []interface{}) []interface{} {
+func Call(fn interface{}, args []interface{}) []interface{} {
 	// Convert args from []interface{} to []reflect.Value
 	vals := make([]reflect.Value, len(args))
 	for i, v := range args {
@@ -373,19 +373,19 @@ func call(fn interface{}, args []interface{}) []interface{} {
 	return result
 }
 
-type output struct {
+type Output struct {
 	results []interface{}
 	stdout  string
 }
 
-func monitor(fn interface{}, args []interface{}) (out output) {
+func Monitor(fn interface{}, args []interface{}) (out Output) {
 	old := os.Stdout
 	r, w, err := os.Pipe()
 	if err != nil {
 		log.Fatalln("Cannot create pipe.")
 	}
 	os.Stdout = w
-	out.results = call(fn, args)
+	out.results = Call(fn, args)
 	outC := make(chan string)
 	var buf strings.Builder
 	go func() {
@@ -399,18 +399,18 @@ func monitor(fn interface{}, args []interface{}) (out output) {
 }
 
 func Challenge(t *testing.T, fn1, fn2 interface{}, args ...interface{}) {
-	st1 := monitor(fn1, args)
-	st2 := monitor(fn2, args)
+	st1 := Monitor(fn1, args)
+	st2 := Monitor(fn2, args)
 	if !reflect.DeepEqual(st1.results, st2.results) {
 		t.Errorf("%s(%s) == %s instead of %s\n",
-			nameOfFunc(fn1),
+			NameOfFunc(fn1),
 			Format(args...),
 			Format(st1.results...),
 			Format(st2.results...),
 		)
 	} else if !reflect.DeepEqual(st1.stdout, st2.stdout) {
 		t.Errorf("%s(%s) prints %s instead of %s\n",
-			nameOfFunc(fn1),
+			NameOfFunc(fn1),
 			Format(args...),
 			Format(st1.stdout),
 			Format(st2.stdout),
