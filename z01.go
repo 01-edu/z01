@@ -419,9 +419,9 @@ func Challenge(t *testing.T, fn1, fn2 interface{}, args ...interface{}) {
 	}
 }
 
-func MainOut(name string, args ...string) (out string, err error) {
-	main := path.Join(name, "a.out")
-	if _, err = ExecOut("go", "build", "-o", main, name); err != nil {
+func MainOut(pkg string, args ...string) (out string, err error) {
+	main := path.Join(pkg, "a.out")
+	if _, err = ExecOut("go", "build", "-o", main, pkg); err != nil {
 		return
 	}
 	out, err = ExecOut(main, args...)
