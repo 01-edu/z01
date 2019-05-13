@@ -1,6 +1,8 @@
 package z01
 
 import (
+	"bytes"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -63,6 +65,75 @@ func PrintRune(r rune) error {
 	utf8.EncodeRune(p, r)
 	_, err := os.Stdout.Write(p)
 	return err
+}
+
+var service string
+
+func output(level, event string, objs ...interface{}) {
+	if service == "" {
+		service = os.Getenv("SERVICE")
+		if service == "" {
+			panic("You must set the service NAME environment variable")
+		}
+	}
+	b, err := json.Marshal(struct {
+		Time    int64  `json:"time"`
+		Service string `json:"service"`
+		Level   string `json:"level"`
+		Event   string `json:"event"`
+	}{
+		time.Now().UnixNano() / int64(time.Millisecond),
+		service,
+		level,
+		event,
+	})
+	if err != nil {
+		panic(err)
+	}
+	if len(objs) > 0 {
+		b[len(b)-1] = ','
+		for _, obj := range objs {
+			if reflect.ValueOf(obj).Kind().String() != "struct" {
+				panic("You can only add structs to your log commands")
+			}
+			c, err := json.Marshal(obj)
+			if err != nil {
+				panic(err)
+			}
+			if bytes.Contains(c, []byte(`"Time":`)) ||
+				bytes.Contains(c, []byte(`"Service":`)) ||
+				bytes.Contains(c, []byte(`"Level":`)) ||
+				bytes.Contains(c, []byte(`"Event":`)) {
+				continue
+			}
+			c[len(c)-1] = ','
+			b = append(b, c[1:len(c)-1]...)
+			b = append(b, ',')
+		}
+		b[len(b)-1] = '}'
+	}
+	os.Stdout.Write(append(b, '\n'))
+}
+
+func Debug(event string, obj ...interface{}) {
+	output("debug", event, obj...)
+}
+
+func Info(event string, obj ...interface{}) {
+	output("info", event, obj...)
+}
+
+func Warn(event string, obj ...interface{}) {
+	output("warn", event, obj...)
+}
+
+func Error(event string, obj ...interface{}) {
+	output("error", event, obj...)
+}
+
+func Fatal(event string, obj ...interface{}) {
+	output("error", event, obj...)
+	os.Exit(1)
 }
 
 // RuneRange returns a string containing all the valid runes from a to b.
