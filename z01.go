@@ -71,7 +71,7 @@ var service string
 
 func output(level, event string, objs ...interface{}) {
 	if service == "" {
-		service = os.Getenv("SERVICE")
+		service = os.Getenv("NAME")
 		if service == "" {
 			panic("You must set the service NAME environment variable")
 		}
