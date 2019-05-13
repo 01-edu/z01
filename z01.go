@@ -100,6 +100,9 @@ func output(level, event string, objs ...interface{}) {
 			if err != nil {
 				panic(err)
 			}
+			if len(c) < 7 {
+				continue
+			}
 			if bytes.Contains(c, []byte(`"Time":`)) ||
 				bytes.Contains(c, []byte(`"Service":`)) ||
 				bytes.Contains(c, []byte(`"Level":`)) ||
@@ -107,8 +110,7 @@ func output(level, event string, objs ...interface{}) {
 				continue
 			}
 			c[len(c)-1] = ','
-			b = append(b, c[1:len(c)-1]...)
-			b = append(b, ',')
+			b = append(b, c[1:]...)
 		}
 		b[len(b)-1] = '}'
 	}
