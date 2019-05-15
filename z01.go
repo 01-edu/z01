@@ -1,7 +1,6 @@
 package z01
 
 import (
-	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -69,7 +68,7 @@ func PrintRune(r rune) error {
 
 var service string
 
-func output(level, event string, objs ...interface{}) {
+func output(level string, v ...interface{}) {
 	if service == "" {
 		service = os.Getenv("NAME")
 		if service == "" {
@@ -82,59 +81,26 @@ func output(level, event string, objs ...interface{}) {
 		Level   string `json:"level"`
 		Event   string `json:"event"`
 	}{
-		time.Now().UnixNano() / int64(time.Millisecond),
-		service,
-		level,
-		event,
+		Time:    time.Now().UnixNano() / int64(time.Millisecond),
+		Service: service,
+		Level:   level,
+		Event:   fmt.Sprint(v...),
 	})
 	if err != nil {
 		panic(err)
 	}
-	if len(objs) > 0 {
-		b[len(b)-1] = ','
-		for _, obj := range objs {
-			if reflect.ValueOf(obj).Kind().String() != "struct" {
-				panic("You can only add structs to your log commands")
-			}
-			c, err := json.Marshal(obj)
-			if err != nil {
-				panic(err)
-			}
-			if len(c) < 7 {
-				continue
-			}
-			if bytes.Contains(c, []byte(`"Time":`)) ||
-				bytes.Contains(c, []byte(`"Service":`)) ||
-				bytes.Contains(c, []byte(`"Level":`)) ||
-				bytes.Contains(c, []byte(`"Event":`)) {
-				continue
-			}
-			c[len(c)-1] = ','
-			b = append(b, c[1:]...)
-		}
-		b[len(b)-1] = '}'
+	_, err = os.Stdout.Write(append(b, '\n'))
+	if err != nil {
+		panic(err)
 	}
-	os.Stdout.Write(append(b, '\n'))
 }
 
-func Debug(event string, obj ...interface{}) {
-	output("debug", event, obj...)
-}
-
-func Info(event string, obj ...interface{}) {
-	output("info", event, obj...)
-}
-
-func Warn(event string, obj ...interface{}) {
-	output("warn", event, obj...)
-}
-
-func Error(event string, obj ...interface{}) {
-	output("error", event, obj...)
-}
-
-func Fatal(event string, obj ...interface{}) {
-	output("error", event, obj...)
+func Debug(v ...interface{}) { output("debug", v...) }
+func Info(v ...interface{})  { output("info", v...) }
+func Warn(v ...interface{})  { output("warn", v...) }
+func Error(v ...interface{}) { output("error", v...) }
+func Fatal(v ...interface{}) {
+	output("error", v...)
 	os.Exit(1)
 }
 
