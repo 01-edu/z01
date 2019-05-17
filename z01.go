@@ -66,14 +66,11 @@ func PrintRune(r rune) error {
 	return err
 }
 
-var service string
+var service = os.Getenv("NAME")
 
 func output(level string, v ...interface{}) {
 	if service == "" {
-		service = os.Getenv("NAME")
-		if service == "" {
-			panic("You must set the service NAME environment variable")
-		}
+		panic("You must set the service NAME environment variable")
 	}
 	b, err := json.Marshal(struct {
 		Time    int64  `json:"time"`
