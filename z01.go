@@ -1,7 +1,6 @@
 package z01
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -15,7 +14,6 @@ import (
 	"reflect"
 	"runtime"
 	"strings"
-	"sync"
 	"testing"
 	"time"
 	"unicode"
@@ -64,41 +62,6 @@ func PrintRune(r rune) error {
 	utf8.EncodeRune(p, r)
 	_, err := os.Stdout.Write(p)
 	return err
-}
-
-var service = os.Getenv("NAME")
-
-func output(level string, v ...interface{}) {
-	if service == "" {
-		panic("You must set the service NAME environment variable")
-	}
-	b, err := json.Marshal(struct {
-		Time    int64  `json:"time"`
-		Service string `json:"service"`
-		Level   string `json:"level"`
-		Event   string `json:"event"`
-	}{
-		Time:    time.Now().UnixNano() / int64(time.Millisecond),
-		Service: service,
-		Level:   level,
-		Event:   fmt.Sprint(v...),
-	})
-	if err != nil {
-		panic(err)
-	}
-	_, err = os.Stdout.Write(append(b, '\n'))
-	if err != nil {
-		panic(err)
-	}
-}
-
-func Debug(v ...interface{}) { output("debug", v...) }
-func Info(v ...interface{})  { output("info", v...) }
-func Warn(v ...interface{})  { output("warn", v...) }
-func Error(v ...interface{}) { output("error", v...) }
-func Fatal(v ...interface{}) {
-	output("error", v...)
-	os.Exit(1)
 }
 
 // RuneRange returns a string containing all the valid runes from a to b.
@@ -296,22 +259,6 @@ func MultRandAlnum() []string { return MakeStrFunc(RandAlnum) }
 // MultRandWords returns a slice of strings containing random Alnum and Space
 // characters.
 func MultRandWords() []string { return MakeStrFunc(RandWords) }
-
-// UniqueId returns a string composed of two numbers:
-// 1) the number of nanoseconds since 1970
-// 2) a bignum counter thread-safely incremented each time this function is called
-var UniqueId = func() func() string {
-	var lock sync.Mutex
-	id := big.NewInt(nsSince1970)
-	one := big.NewInt(1)
-	return func() string {
-		lock.Lock()
-		id.Add(id, one)
-		s := id.String()
-		lock.Unlock()
-		return s
-	}
-}()
 
 // Wrap returns an error composed of the string of err & s
 // Append " : " if s is a single-line
