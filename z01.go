@@ -416,11 +416,11 @@ func ChallengeMain(t *testing.T, args ...string) {
 		strings.TrimPrefix(t.Name(), "Test"))
 	out, err := MainOut("./student/"+exercise, args...)
 	if err != nil {
-		t.Errorf(err.Error())
+		t.Error(err)
 	}
 	correct, err := MainOut("./solutions/"+exercise, args...)
 	if err != nil {
-		t.Errorf(err.Error())
+		t.Error(err)
 	}
 	if out != correct {
 		t.Errorf("./%s %s prints %q instead of %q\n",
