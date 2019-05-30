@@ -138,13 +138,13 @@ func MakeIntFunc(f func() int) (s []int) {
 // MultRandPosZ returns a slice of random ints between 0 and MaxInt included.
 func MultRandPosZ() []int { return MakeIntFunc(RandPosZ) }
 
-// MultRandPos returns a rslice of andom int sbetween 1 and MaxInt included.
+// MultRandPos returns a slice of random ints between 1 and MaxInt included.
 func MultRandPos() []int { return MakeIntFunc(RandPos) }
 
-// MultRandInt returns a rslice of andom int sbetween MinInt and MaxInt included.
+// MultRandInt returns a slice of random ints between MinInt and MaxInt included.
 func MultRandInt() []int { return MakeIntFunc(RandInt) }
 
-// MultRandNeg returns a rslice of andom int sbetween MinInt and 1 included.
+// MultRandNeg returns a slice of random ints between MinInt and 1 included.
 func MultRandNeg() []int { return MakeIntFunc(RandNeg) }
 
 // MultRandNegZ returns a slice of random ints between MinInt and 0 included.
