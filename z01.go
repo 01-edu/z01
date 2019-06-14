@@ -302,21 +302,13 @@ func Format(a ...interface{}) string {
 		case nil:
 			ss[i] = "nil" // instead of "<nil>"
 		case
+			string,
 			byte, // uint8
 			rune: // int32
-			// a single-quoted character literal safely escaped with Go syntax
+
+			// string     : a double-quoted string safely escaped with Go syntax
+			// byte, rune : a single-quoted character literal safely escaped with Go syntax
 			ss[i] = fmt.Sprintf("%q", v)
-		case string:
-			s := []rune(fmt.Sprintf("%#v", v))
-			l := len(s)
-			max := 120
-			if l > max {
-				// truncate the string
-				extra := l - max
-				start := (l - extra + 1) / 2
-				s = append(s[:start], append([]rune("[...]"), s[start+extra:]...)...)
-			}
-			ss[i] = string(s)
 		default:
 			// a Go-syntax representation of the value
 			ss[i] = fmt.Sprintf("%#v", v)
@@ -393,7 +385,7 @@ func Challenge(t *testing.T, fn1, fn2 interface{}, args ...interface{}) {
 			Format(st2.Results...),
 		)
 	} else if !reflect.DeepEqual(st1.Stdout, st2.Stdout) {
-		t.Errorf("%s(%s) prints %s instead of %s\n",
+		t.Errorf("%s(%s) prints:\n%s\ninstead of:\n%s\n",
 			NameOfFunc(fn1),
 			Format(args...),
 			Format(st1.Stdout),
