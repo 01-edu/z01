@@ -409,13 +409,21 @@ func MainOut(pkg string, args ...string) (out string, err error) {
 }
 
 func ChallengeMain(t *testing.T, args ...string) {
+	challengeProgram(t, "./student/", "./solutions/", args...)
+}
+
+func ChallengeMainExam(t *testing.T, args ...string) {
+	challengeProgram(t, "../", "../../solutions/", args...)
+}
+
+func challengeProgram(t *testing.T, stuPath, solPath string, args ...string) {
 	exercise := strings.ToLower(
 		strings.TrimPrefix(t.Name(), "Test"))
-	out, err := MainOut("./student/"+exercise, args...)
+	out, err := MainOut(stuPath+exercise, args...)
 	if err != nil {
 		t.Error(err)
 	}
-	correct, err := MainOut("./solutions/"+exercise, args...)
+	correct, err := MainOut(solPath+exercise, args...)
 	if err != nil {
 		t.Error(err)
 	}
