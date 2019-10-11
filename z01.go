@@ -64,6 +64,23 @@ func PrintRune(r rune) error {
 	return err
 }
 
+func ExamplePrintRune() {
+	PrintRune('h')
+	PrintRune('e')
+	PrintRune('l')
+	PrintRune('l')
+	PrintRune('o')
+	PrintRune('\n')
+	// Output: hello
+}
+
+func ExamplePrintRune_for() {
+	for _,r range "hello world\n" {
+		PrintRune(r)
+	}
+	// Output: hello world
+}
+
 // RuneRange returns a string containing all the valid runes from a to b.
 func RuneRange(a, b rune) string {
 	var s []rune
