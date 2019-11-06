@@ -429,6 +429,6 @@ func challengeProgram(t *testing.T, stuPath, solPath string, args ...string) {
 	}
 	if out != correct {
 		t.Errorf("./%s \"%s\" prints %q instead of %q\n",
-			exercise, strings.Join(args, " "), out, correct)
+			exercise, strings.Join(args, "\" \""), out, correct)
 	}
 }
