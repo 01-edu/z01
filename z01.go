@@ -378,14 +378,14 @@ func Challenge(t *testing.T, fn1, fn2 interface{}, args ...interface{}) {
 	st1 := Monitor(fn1, args)
 	st2 := Monitor(fn2, args)
 	if !reflect.DeepEqual(st1.Results, st2.Results) {
-		t.Errorf("%s(%s) == %s instead of %s\n",
+		t.Fatalf("%s(%s) == %s instead of %s\n",
 			NameOfFunc(fn1),
 			Format(args...),
 			Format(st1.Results...),
 			Format(st2.Results...),
 		)
 	} else if !reflect.DeepEqual(st1.Stdout, st2.Stdout) {
-		t.Errorf("%s(%s) prints:\n%s\ninstead of:\n%s\n",
+		t.Fatalf("%s(%s) prints:\n%s\ninstead of:\n%s\n",
 			NameOfFunc(fn1),
 			Format(args...),
 			Format(st1.Stdout),
@@ -421,14 +421,14 @@ func challengeProgram(t *testing.T, stuPath, solPath string, args ...string) {
 		strings.TrimPrefix(t.Name(), "Test"))
 	out, err := MainOut(stuPath+exercise, args...)
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 	correct, err := MainOut(solPath+exercise, args...)
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 	if out != correct {
-		t.Errorf("./%s \"%s\" prints %q instead of %q\n",
+		t.Fatalf("./%s \"%s\" prints %q instead of %q\n",
 			exercise, strings.Join(args, "\" \""), out, correct)
 	}
 }
